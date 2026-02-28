@@ -1,0 +1,35 @@
+{
+	"name": "n8n-nodes-omnifact",
+	"version": "0.1.0",
+	"description": "n8n community node for the Omnifact API",
+	"keywords": ["n8n-community-node-package"],
+	"license": "MIT",
+	"author": {
+		"name": "Omnifact"
+	},
+	"main": "index.js",
+	"files": ["dist"],
+	"scripts": {
+		"build": "n8n-node build",
+		"dev": "n8n-node dev",
+		"lint": "n8n-node lint",
+		"lint:fix": "n8n-node lint --fix",
+		"release": "n8n-node release",
+		"prepublishOnly": "n8n-node prerelease"
+	},
+	"peerDependencies": {
+		"n8n-workflow": "*"
+	},
+	"devDependencies": {
+		"@n8n/node-cli": "latest",
+		"eslint": "latest",
+		"prettier": "latest",
+		"typescript": "latest"
+	},
+	"n8n": {
+		"n8nNodesApiVersion": 1,
+		"strict": true,
+		"nodes": ["dist/nodes/Omnifact/Omnifact.node.js"],
+		"credentials": ["dist/credentials/OmnifactApi.credentials.js"]
+	}
+}
