@@ -7,7 +7,6 @@
 	"author": {
 		"name": "Omnifact"
 	},
-	"main": "index.js",
 	"files": ["dist"],
 	"scripts": {
 		"build": "n8n-node build",

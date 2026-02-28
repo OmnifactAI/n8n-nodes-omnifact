@@ -1,10 +1,15 @@
 {
-	"node": "n8n-nodes-base.omnifact",
+	"node": "n8n-nodes-omnifact.omnifact",
 	"nodeVersion": "1.0",
 	"codexVersion": "1.0",
 	"categories": ["Development"],
 	"resources": {
 		"primaryDocumentation": [
+			{
+				"url": "https://docs.omnifact.ai"
+			}
+		],
+		"credentialDocumentation": [
 			{
 				"url": "https://docs.omnifact.ai"
 			}

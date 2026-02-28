@@ -324,7 +324,7 @@ Loop with offset/cursor, push results into array, respect `returnAll` / `limit` 
 
 ```json
 {
-  "node": "n8n-nodes-base.omnifact",
+  "node": "n8n-nodes-omnifact.omnifact",
   "nodeVersion": "1.0",
   "codexVersion": "1.0",
   "categories": ["Development"],
@@ -422,6 +422,82 @@ npm run lint:fix     # Auto-fix lint issues
 1. `npm run build`
 2. `npm publish`
 3. Ensure: name starts with `n8n-nodes-`, keyword `n8n-community-node-package`, MIT license, `peerDependencies: { "n8n-workflow": "*" }`
+
+## Testing
+
+n8n has no official test harness for community nodes. Use **Jest + ts-jest** with mocked `IExecuteFunctions`.
+
+### Setup
+
+```bash
+npm install --save-dev jest ts-jest @types/jest
+# n8n-workflow must also be in devDependencies (not just peerDeps) for test imports
+```
+
+Add scripts: `"test": "jest"`, `"test:watch": "jest --watch"`, `"test:coverage": "jest --coverage"`
+
+### Config
+
+`jest.config.js`:
+```js
+module.exports = {
+  preset: 'ts-jest',
+  testEnvironment: 'node',
+  roots: ['<rootDir>/tests'],
+  testMatch: ['**/*.test.ts'],
+};
+```
+
+`tsconfig.test.json` (extends main, adds `tests/`):
+```json
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": { "declaration": false, "incremental": false, "noUnusedLocals": false },
+  "include": ["credentials/**/*", "nodes/**/*", "tests/**/*"]
+}
+```
+
+Reference in jest config: `globals: { 'ts-jest': { tsconfig: 'tsconfig.test.json' } }`
+
+### Directory structure
+
+```
+tests/
+├── mocks/
+│   └── mockExecuteFunctions.ts   # IExecuteFunctions mock factory
+└── unit/
+    ├── chat-send.test.ts
+    ├── document-create.test.ts
+    ├── document-delete.test.ts
+    ├── document-get.test.ts
+    ├── document-getAll.test.ts
+    └── document-update.test.ts
+```
+
+### Mock pattern
+
+Create a factory that returns a mock `IExecuteFunctions` with:
+- `getInputData()` returning test items
+- `getNodeParameter()` backed by a params object (use `lodash.get`)
+- `helpers.httpRequest` / `helpers.httpRequestWithAuthentication` as jest mocks
+- `helpers.returnJsonArray`, `helpers.constructExecutionMetaData` with real-ish impls
+- `helpers.assertBinaryData`, `helpers.getBinaryDataBuffer` for file upload tests
+- `continueOnFail()` returning configurable boolean
+
+Then call `node.execute.call(mockFns)` and assert on results + HTTP call args.
+
+### What to test (priority order)
+
+1. **Pure functions** — export `formatInlineSourcesAsMarkdown` / `formatDocumentPartsAsMarkdown` and test directly (no mocking)
+2. **Each operation** — verify correct HTTP method/URL/body, verify output shape
+3. **Pagination** — getAll with multiple pages, limit enforcement, empty responses
+4. **Error handling** — `continueOnFail` true (returns error json) vs false (throws `NodeOperationError`)
+5. **Credential structure** — verify name, authenticate headers, test endpoint shape
+
+### Reference
+
+- n8n built-in node tests: `packages/nodes-base/nodes/Airtable/test/` in the n8n repo
+- Community example: `n8n-nodes-substack` by Jakub Slys
 
 ## Verification Checklist
 
