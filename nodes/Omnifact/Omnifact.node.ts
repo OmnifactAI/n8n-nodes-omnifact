@@ -33,7 +33,7 @@ interface OmnifactChatResponse {
 	tokenUsage: { inputTokens: number; outputTokens: number };
 }
 
-function formatInlineSourcesAsMarkdown(
+export function formatInlineSourcesAsMarkdown(
 	content: string,
 	sources: OmnifactInlineSource[],
 ): string {
@@ -51,7 +51,7 @@ function formatInlineSourcesAsMarkdown(
 	return `${content}\n\n---\n**Sources:**\n${footnotes}`;
 }
 
-function formatDocumentPartsAsMarkdown(
+export function formatDocumentPartsAsMarkdown(
 	content: string,
 	documentParts: OmnifactDocumentPart[],
 ): string {

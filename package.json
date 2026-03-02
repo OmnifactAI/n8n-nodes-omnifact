@@ -14,16 +14,23 @@
 		"lint": "n8n-node lint",
 		"lint:fix": "n8n-node lint --fix",
 		"release": "n8n-node release",
-		"prepublishOnly": "n8n-node prerelease"
+		"prepublishOnly": "n8n-node prerelease",
+		"test": "jest",
+		"test:watch": "jest --watch",
+		"test:coverage": "jest --coverage"
 	},
 	"peerDependencies": {
 		"n8n-workflow": "*"
 	},
 	"devDependencies": {
-		"@n8n/node-cli": "latest",
-		"eslint": "latest",
-		"prettier": "latest",
-		"typescript": "latest"
+		"@n8n/node-cli": "0.21.0",
+		"@types/jest": "29.5.0",
+		"eslint": "9.39.3",
+		"jest": "29.7.0",
+		"n8n-workflow": "*",
+		"prettier": "3.8.1",
+		"ts-jest": "29.1.0",
+		"typescript": "5.9.3"
 	},
 	"n8n": {
 		"n8nNodesApiVersion": 1,

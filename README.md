@@ -37,9 +37,22 @@ The **Chat** resource uses unauthenticated endpoint URLs and does not require cr
 - **Get Many** — List documents in a space (with pagination)
 - **Update** — Rename a document
 
+## Development
+
+```bash
+npm install          # Install dependencies
+npm run dev          # Launch n8n with the node loaded (hot reload)
+npm run build        # Compile to dist/
+npm run lint         # Check lint
+npm run lint:fix     # Auto-fix lint issues
+npm run test         # Run tests
+npm run test:watch   # Run tests in watch mode
+npm run test:coverage # Run tests with coverage report
+```
+
 ## Compatibility
 
-Tested with n8n v1.x. Requires n8n community node support (available in n8n v0.187+).
+Tested with n8n v2.9.4. Requires n8n community node support (available in n8n v0.187+).
 
 ## License
 
