@@ -23,7 +23,12 @@ export interface MockExecuteOptions {
 
 export function createMockExecuteFunctions(opts: MockExecuteOptions = {}): IExecuteFunctions {
 	const params = opts.params ?? {};
-	const items = opts.items ?? [{ json: {} }];
+	const items = opts.items ?? [
+		{
+			json: {},
+			...(opts.binaryData ? { binary: opts.binaryData } : {}),
+		},
+	];
 	const shouldContinueOnFail = opts.continueOnFail ?? false;
 
 	const httpRequest = jest.fn();

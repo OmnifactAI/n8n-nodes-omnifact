@@ -1,3 +1,4 @@
+import FormData from 'form-data';
 import type {
 	IDataObject,
 	IExecuteFunctions,
@@ -288,41 +289,90 @@ export class Omnifact implements INodeType {
 							i,
 						) as IDataObject;
 
+						const itemBinaryData = items[i].binary;
+						const availableFields = itemBinaryData
+							? Object.keys(itemBinaryData)
+							: [];
+
+						if (!itemBinaryData || !itemBinaryData[binaryPropertyName]) {
+							throw new NodeOperationError(
+								this.getNode(),
+								`The item has no binary field "${binaryPropertyName}". ` +
+								`Available binary fields: [${availableFields.join(', ')}]. ` +
+								`Make sure a previous node (e.g. "Read Binary File" or "HTTP Request") ` +
+								`outputs binary data with the field name "${binaryPropertyName}".`,
+								{ itemIndex: i },
+							);
+						}
+
 						const binaryData = this.helpers.assertBinaryData(i, binaryPropertyName);
 						const dataBuffer = await this.helpers.getBinaryDataBuffer(
 							i,
 							binaryPropertyName,
 						);
 
-						const formData: IDataObject = {
-							file: {
-								value: dataBuffer,
-								options: {
-									filename: (additionalFields.name as string) || binaryData.fileName,
-									contentType: binaryData.mimeType,
-								},
-							},
-						};
+						const fileName =
+							(additionalFields.name as string) || binaryData.fileName || 'upload';
+						const mimeType = binaryData.mimeType || 'application/octet-stream';
+
+						const formData = new FormData();
+						formData.append('file', dataBuffer, {
+							filename: fileName,
+							contentType: mimeType,
+						});
 
 						if (additionalFields.metadata) {
-							formData.metadata = additionalFields.metadata;
+							formData.append(
+								'metadata',
+								typeof additionalFields.metadata === 'string'
+									? additionalFields.metadata
+									: JSON.stringify(additionalFields.metadata),
+							);
 						}
 
 						const options: IHttpRequestOptions = {
 							method: 'POST',
 							url: `https://connect.omnifact.ai/v1/documents?spaceId=${spaceId}`,
 							body: formData,
-							headers: { 'Content-Type': 'multipart/form-data' },
+							headers: formData.getHeaders(),
 							json: true,
 						};
 
-						const response = await this.helpers.httpRequestWithAuthentication.call(
-							this,
-							'omnifactApi',
-							options,
-						);
+						let response: IDataObject;
+						try {
+							response = (await this.helpers.httpRequestWithAuthentication.call(
+								this,
+								'omnifactApi',
+								options,
+							)) as IDataObject;
+						} catch (uploadError) {
+							const errObj = uploadError as Record<string, unknown>;
+							const context = errObj.context as Record<string, unknown> | undefined;
+							const contextData = context?.data as Record<string, unknown> | undefined;
+							const errorCode =
+								(contextData?.code as string) ?? 'UploadFailed';
+							const detail =
+								(contextData?.message as string) ??
+								(errObj.description as string) ??
+								(uploadError as Error).message;
+
+							if (this.continueOnFail()) {
+								response = {
+									name: fileName,
+									spaceId,
+									error: errorCode,
+									errorMessage: detail,
+								};
+							} else {
+								throw new NodeOperationError(
+									this.getNode(),
+									`Document upload failed: ${detail}`,
+									{ itemIndex: i },
+								);
+							}
+						}
 						const executionData = this.helpers.constructExecutionMetaData(
-							this.helpers.returnJsonArray(response as IDataObject),
+							this.helpers.returnJsonArray(response),
 							{ itemData: { item: i } },
 						);
 						returnData.push(...executionData);
