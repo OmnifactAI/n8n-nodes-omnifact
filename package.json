@@ -2,12 +2,16 @@
 	"name": "n8n-nodes-omnifact",
 	"version": "0.1.0",
 	"description": "n8n community node for the Omnifact API",
-	"keywords": ["n8n-community-node-package"],
+	"keywords": [
+		"n8n-community-node-package"
+	],
 	"license": "MIT",
 	"author": {
 		"name": "Omnifact GmbH"
 	},
-	"files": ["dist"],
+	"files": [
+		"dist"
+	],
 	"scripts": {
 		"build": "n8n-node build",
 		"dev": "n8n-node dev",
@@ -23,19 +27,23 @@
 		"n8n-workflow": "*"
 	},
 	"devDependencies": {
-		"@n8n/node-cli": "0.21.0",
+		"@n8n/node-cli": "^0.31.0",
 		"@types/jest": "29.5.0",
 		"eslint": "9.39.3",
 		"jest": "29.7.0",
-		"n8n-workflow": "*",
-		"prettier": "3.8.1",
-		"ts-jest": "29.1.0",
+		"n8n-workflow": "^2.16.0",
+		"prettier": "^3.8.3",
+		"ts-jest": "^29.4.10",
 		"typescript": "5.9.3"
 	},
 	"n8n": {
 		"n8nNodesApiVersion": 1,
 		"strict": true,
-		"nodes": ["dist/nodes/Omnifact/Omnifact.node.js"],
-		"credentials": ["dist/credentials/OmnifactApi.credentials.js"]
+		"nodes": [
+			"dist/nodes/Omnifact/Omnifact.node.js"
+		],
+		"credentials": [
+			"dist/credentials/OmnifactApi.credentials.js"
+		]
 	}
 }

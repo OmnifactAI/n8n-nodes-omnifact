@@ -1,4 +1,3 @@
-import FormData from 'form-data';
 import { Omnifact } from '../../nodes/Omnifact/Omnifact.node';
 import { createMockExecuteFunctions } from '../mocks/mockExecuteFunctions';
 
@@ -38,7 +37,7 @@ describe('Document: Create', () => {
 		expect(opts.method).toBe('POST');
 		expect(opts.url).toContain('spaceId=space-123');
 		expect(opts.body).toBeInstanceOf(FormData);
-		expect(opts.headers['content-type']).toMatch(/^multipart\/form-data; boundary=/);
+		expect((opts.body as FormData).get('file')).toBeInstanceOf(Blob);
 	});
 
 	it('should use custom name from additional fields', async () => {
@@ -63,9 +62,9 @@ describe('Document: Create', () => {
 
 		const opts = (mock.helpers.httpRequestWithAuthentication as jest.Mock).mock.calls[0][1];
 		expect(opts.body).toBeInstanceOf(FormData);
-		// Verify the form data contains the file by checking the submit headers
-		const headers = (opts.body as FormData).getHeaders();
-		expect(headers['content-type']).toMatch(/^multipart\/form-data/);
+		expect(((opts.body as FormData).get('file') as { name?: string }).name).toBe(
+			'custom-name.pdf',
+		);
 	});
 
 	it('should include metadata when provided', async () => {
@@ -90,6 +89,7 @@ describe('Document: Create', () => {
 
 		const opts = (mock.helpers.httpRequestWithAuthentication as jest.Mock).mock.calls[0][1];
 		expect(opts.body).toBeInstanceOf(FormData);
+		expect((opts.body as FormData).get('metadata')).toBe('{"key":"value"}');
 	});
 
 	it('should throw helpful error when binary field is missing', async () => {

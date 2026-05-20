@@ -1,4 +1,3 @@
-import FormData from 'form-data';
 import type {
 	IDataObject,
 	IExecuteFunctions,
@@ -24,6 +23,8 @@ interface OmnifactDocumentPart {
 	type: string;
 	number: number;
 }
+
+type MultipartRequestBody = IHttpRequestOptions['body'] & FormData;
 
 interface OmnifactChatResponse {
 	id: string;
@@ -315,11 +316,11 @@ export class Omnifact implements INodeType {
 							(additionalFields.name as string) || binaryData.fileName || 'upload';
 						const mimeType = binaryData.mimeType || 'application/octet-stream';
 
-						const formData = new FormData();
-						formData.append('file', dataBuffer, {
-							filename: fileName,
-							contentType: mimeType,
-						});
+						// n8n's request type still references the legacy form-data package,
+						// while Cloud-compatible nodes should use the platform FormData API.
+						const formData = new FormData() as MultipartRequestBody;
+						const file = new Blob([dataBuffer], { type: mimeType });
+						formData.append('file', file, fileName);
 
 						if (additionalFields.metadata) {
 							formData.append(
@@ -334,7 +335,6 @@ export class Omnifact implements INodeType {
 							method: 'POST',
 							url: `https://connect.omnifact.ai/v1/documents?spaceId=${spaceId}`,
 							body: formData,
-							headers: formData.getHeaders(),
 							json: true,
 						};
 
