@@ -1,0 +1,30 @@
+---
+description: n8n node implementation patterns for Omnifact TypeScript files
+globs: nodes/**/*.ts,credentials/**/*.ts
+alwaysApply: false
+---
+
+# n8n Node Development
+
+- Prefer declarative nodes for REST APIs; use programmatic `execute()` only for triggers, GraphQL, complex transforms, external integrations, or full versioning needs.
+- The node class name must match the node filename: `Omnifact` in `Omnifact.node.ts`.
+- Use n8n helpers for HTTP: `this.helpers.httpRequest()` or `this.helpers.httpRequestWithAuthentication()`. Do not use `axios`, `fetch`, or `got`.
+- Never mutate input data; clone before changing values.
+- Always preserve item pairing with `constructExecutionMetaData` or `pairedItem`.
+- For programmatic operations, wrap errors with `NodeOperationError(this.getNode(), error, { itemIndex })` and respect `continueOnFail()`.
+- Reuse field `value` strings across operations when possible so user-entered data persists while switching operations.
+- Import runtime values separately from types.
+
+## UI Parameters
+
+- Use Title Case for `displayName` and option `name`.
+- Use sentence case for `description`, `action`, and `hint`.
+- Boolean descriptions must start with `Whether...`.
+- Placeholders must start with `e.g. ...`.
+- Operation `action` text must include the resource name.
+- Field order should be Resource, Operation, required fields, then `Additional Fields`.
+- `resource` and `operation` parameters require `noDataExpression: true`.
+- Optional fields belong in an `Additional Fields` collection with `placeholder: 'Add Field'`.
+- Use `resourceLocator` for selecting one external item.
+- Add a simplify parameter when responses contain more than 10 fields.
+- Delete operations should return `[{ deleted: true }]`.

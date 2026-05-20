@@ -1,0 +1,18 @@
+---
+description: Jest testing guidance for the Omnifact n8n node
+globs: tests/**/*.ts,jest.config.js,tsconfig.test.json
+alwaysApply: false
+---
+
+# Testing
+
+- Use Jest with `ts-jest` for unit tests.
+- Mock `IExecuteFunctions` for node execution tests.
+- Back `getNodeParameter()` with a params object and realistic nested lookup behavior.
+- Mock `helpers.httpRequest` and `helpers.httpRequestWithAuthentication`.
+- Implement `helpers.returnJsonArray` and `helpers.constructExecutionMetaData` close to n8n behavior.
+- Include binary helper mocks when testing file uploads.
+- Test pure formatting functions directly when available.
+- For each operation, verify HTTP method, URL, body/query parameters, and output shape.
+- Cover pagination, limit enforcement, empty responses, and `continueOnFail()` error behavior for higher-risk changes.
+- Credential tests should verify credential name, auth header shape, and test endpoint shape.

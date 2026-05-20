@@ -1,0 +1,22 @@
+---
+description: Core project context for the Omnifact n8n community node
+alwaysApply: true
+---
+
+# Omnifact n8n Community Node
+
+- This package is `n8n-nodes-omnifact`, an n8n community node for the Omnifact API.
+- Prefer existing repository patterns over new abstractions.
+- Use TypeScript strict-mode friendly code and keep edits scoped to the requested behavior.
+- Do not add external runtime dependencies for verified node behavior.
+- Do not use env vars or filesystem access inside node runtime code.
+- Use Prettier defaults from `.prettierrc.js`: tabs, single quotes, trailing commas, LF, and 100-character print width.
+- Verify substantive changes with `npm run lint` and `npm run build` when practical.
+
+## Expected Structure
+
+- Credentials live in `credentials/OmnifactApi.credentials.ts`.
+- The main node class is `Omnifact` in `nodes/Omnifact/Omnifact.node.ts`.
+- Resource operations live under `nodes/Omnifact/resources/<resourceName>/`.
+- Shared descriptions and transport helpers live under `nodes/Omnifact/shared/`.
+- Icons exist as light/dark SVG pairs in `nodes/Omnifact/` and `icons/`.

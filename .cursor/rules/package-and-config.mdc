@@ -1,0 +1,29 @@
+---
+description: Package, build, lint, and n8n metadata requirements
+globs: package.json,tsconfig*.json,eslint.config.mjs,.prettierrc.js,nodes/**/*.json
+alwaysApply: false
+---
+
+# Package And Config
+
+## `package.json`
+
+- `name` must start with `n8n-nodes-`.
+- `keywords` must include `n8n-community-node-package`.
+- `files` should be `["dist"]`.
+- `peerDependencies` must include `"n8n-workflow": "*"`; keep `n8n-workflow` out of regular dependencies.
+- Required scripts are `build`, `dev`, `lint`, `lint:fix`, `release`, and `prepublishOnly` using `n8n-node`.
+- `n8n.n8nNodesApiVersion` must be `1`.
+- `n8n.strict` must be `true`.
+- `n8n.nodes` and `n8n.credentials` must point at `dist/` files.
+
+## Config Files
+
+- `eslint.config.mjs` should export `config` from `@n8n/node-cli/eslint`.
+- TypeScript should stay strict with CommonJS output to `dist/`.
+- `.prettierrc.js` should preserve tabs, single quotes, trailing commas, LF endings, and 100-character print width.
+
+## Codex Metadata
+
+- Node codex files use `node: "n8n-nodes-omnifact.omnifact"`, `nodeVersion: "1.0"`, and `codexVersion: "1.0"`.
+- Prefer valid n8n categories such as `Development`, `Utility`, `Communication`, or `Productivity`.
