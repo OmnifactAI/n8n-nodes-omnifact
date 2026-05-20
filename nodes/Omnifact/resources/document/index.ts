@@ -1,5 +1,11 @@
 import type { INodeProperties } from 'n8n-workflow';
 
+import { createDescription } from './create/description';
+import { deleteDescription } from './delete/description';
+import { getDescription } from './get/description';
+import { getAllDescription } from './getAll/description';
+import { updateDescription } from './update/description';
+
 export const documentDescription: INodeProperties[] = [
 	{
 		displayName: 'Operation',
@@ -41,120 +47,9 @@ export const documentDescription: INodeProperties[] = [
 		],
 		default: 'get',
 	},
-	// ------ Create fields ------
-	{
-		displayName: 'Space ID',
-		name: 'spaceId',
-		type: 'string',
-		required: true,
-		default: '',
-		placeholder: 'e.g. 12345678-abcd-1234-abcd-123456789abc',
-		description: 'The UUID of the space to upload the document to',
-		displayOptions: { show: { resource: ['document'], operation: ['create'] } },
-	},
-	{
-		displayName: 'Binary Property',
-		name: 'binaryPropertyName',
-		type: 'string',
-		required: true,
-		default: 'data',
-		description: 'The name of the input binary field containing the file to upload',
-		displayOptions: { show: { resource: ['document'], operation: ['create'] } },
-	},
-	{
-		displayName: 'Additional Fields',
-		name: 'additionalFields',
-		type: 'collection',
-		placeholder: 'Add Field',
-		default: {},
-		displayOptions: { show: { resource: ['document'], operation: ['create'] } },
-		options: [
-			{
-				displayName: 'Name',
-				name: 'name',
-				type: 'string',
-				default: '',
-				description: 'Override the filename of the uploaded document',
-			},
-			{
-				displayName: 'Metadata',
-				name: 'metadata',
-				type: 'json',
-				default: '{}',
-				description: 'Additional metadata to attach to the document as JSON',
-			},
-		],
-	},
-	// ------ Delete fields ------
-	{
-		displayName: 'Document ID',
-		name: 'documentId',
-		type: 'string',
-		required: true,
-		default: '',
-		placeholder: 'e.g. 12345678-abcd-1234-abcd-123456789abc',
-		description: 'The UUID of the document to delete',
-		displayOptions: { show: { resource: ['document'], operation: ['delete'] } },
-	},
-	// ------ Get fields ------
-	{
-		displayName: 'Document ID',
-		name: 'documentId',
-		type: 'string',
-		required: true,
-		default: '',
-		placeholder: 'e.g. 12345678-abcd-1234-abcd-123456789abc',
-		description: 'The UUID of the document to retrieve',
-		displayOptions: { show: { resource: ['document'], operation: ['get'] } },
-	},
-	// ------ Get Many fields ------
-	{
-		displayName: 'Space ID',
-		name: 'spaceId',
-		type: 'string',
-		required: true,
-		default: '',
-		placeholder: 'e.g. 12345678-abcd-1234-abcd-123456789abc',
-		description: 'The UUID of the space to list documents from',
-		displayOptions: { show: { resource: ['document'], operation: ['getAll'] } },
-	},
-	{
-		displayName: 'Return All',
-		name: 'returnAll',
-		type: 'boolean',
-		default: false,
-		description: 'Whether to return all results or only up to a given limit',
-		displayOptions: { show: { resource: ['document'], operation: ['getAll'] } },
-	},
-	{
-		displayName: 'Limit',
-		name: 'limit',
-		type: 'number',
-		default: 50,
-		typeOptions: { minValue: 1 },
-		description: 'Max number of results to return',
-		displayOptions: {
-			show: { resource: ['document'], operation: ['getAll'], returnAll: [false] },
-		},
-	},
-	// ------ Update fields ------
-	{
-		displayName: 'Document ID',
-		name: 'documentId',
-		type: 'string',
-		required: true,
-		default: '',
-		placeholder: 'e.g. 12345678-abcd-1234-abcd-123456789abc',
-		description: 'The UUID of the document to update',
-		displayOptions: { show: { resource: ['document'], operation: ['update'] } },
-	},
-	{
-		displayName: 'Name',
-		name: 'name',
-		type: 'string',
-		required: true,
-		default: '',
-		description: 'The new name for the document',
-		displayOptions: { show: { resource: ['document'], operation: ['update'] } },
-	},
+	...createDescription,
+	...deleteDescription,
+	...getDescription,
+	...getAllDescription,
+	...updateDescription,
 ];

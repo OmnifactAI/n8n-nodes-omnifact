@@ -94,4 +94,42 @@ describe('Document: Get Many', () => {
 
 		expect(result[0]).toHaveLength(0);
 	});
+
+	it('should return error json when continueOnFail is true', async () => {
+		const mock = createMockExecuteFunctions({
+			params: {
+				resource: 'document',
+				operation: 'getAll',
+				spaceId: 'space-123',
+				returnAll: true,
+			},
+			continueOnFail: true,
+		});
+
+		(mock.helpers.httpRequestWithAuthentication as jest.Mock).mockRejectedValue(
+			new Error('List failed'),
+		);
+
+		const result = await node.execute.call(mock);
+
+		expect(result[0][0].json).toEqual({ error: 'List failed' });
+		expect(result[0][0].pairedItem).toEqual({ item: 0 });
+	});
+
+	it('should throw when continueOnFail is false', async () => {
+		const mock = createMockExecuteFunctions({
+			params: {
+				resource: 'document',
+				operation: 'getAll',
+				spaceId: 'space-123',
+				returnAll: true,
+			},
+		});
+
+		(mock.helpers.httpRequestWithAuthentication as jest.Mock).mockRejectedValue(
+			new Error('List failed'),
+		);
+
+		await expect(node.execute.call(mock)).rejects.toThrow(/List failed/);
+	});
 });

@@ -25,4 +25,40 @@ describe('Document: Delete', () => {
 		expect(opts.method).toBe('DELETE');
 		expect(opts.url).toContain('/v1/documents/doc-123');
 	});
+
+	it('should return error json when continueOnFail is true', async () => {
+		const mock = createMockExecuteFunctions({
+			params: {
+				resource: 'document',
+				operation: 'delete',
+				documentId: 'doc-123',
+			},
+			continueOnFail: true,
+		});
+
+		(mock.helpers.httpRequestWithAuthentication as jest.Mock).mockRejectedValue(
+			new Error('Delete failed'),
+		);
+
+		const result = await node.execute.call(mock);
+
+		expect(result[0][0].json).toEqual({ error: 'Delete failed' });
+		expect(result[0][0].pairedItem).toEqual({ item: 0 });
+	});
+
+	it('should throw when continueOnFail is false', async () => {
+		const mock = createMockExecuteFunctions({
+			params: {
+				resource: 'document',
+				operation: 'delete',
+				documentId: 'doc-123',
+			},
+		});
+
+		(mock.helpers.httpRequestWithAuthentication as jest.Mock).mockRejectedValue(
+			new Error('Delete failed'),
+		);
+
+		await expect(node.execute.call(mock)).rejects.toThrow(/Delete failed/);
+	});
 });

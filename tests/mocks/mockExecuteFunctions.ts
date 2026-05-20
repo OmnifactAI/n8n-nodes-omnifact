@@ -15,6 +15,7 @@ function get(obj: IDataObject, path: string): unknown {
 
 export interface MockExecuteOptions {
 	params?: IDataObject;
+	paramsByItem?: IDataObject[];
 	items?: INodeExecutionData[];
 	continueOnFail?: boolean;
 	binaryData?: Record<string, IBinaryData>;
@@ -23,6 +24,7 @@ export interface MockExecuteOptions {
 
 export function createMockExecuteFunctions(opts: MockExecuteOptions = {}): IExecuteFunctions {
 	const params = opts.params ?? {};
+	const paramsByItem = opts.paramsByItem;
 	const items = opts.items ?? [
 		{
 			json: {},
@@ -45,9 +47,13 @@ export function createMockExecuteFunctions(opts: MockExecuteOptions = {}): IExec
 
 	const mock = {
 		getInputData: jest.fn().mockReturnValue(items),
-		getNodeParameter: jest.fn().mockImplementation((name: string) => {
-			const value = get(params, name);
+		getNodeParameter: jest.fn().mockImplementation((name: string, index = 0, fallback?: unknown) => {
+			const itemParams = paramsByItem?.[index] ?? params;
+			const value = get(itemParams, name);
 			if (value === undefined) {
+				if (fallback !== undefined) {
+					return fallback;
+				}
 				throw new Error(`Parameter "${name}" not set`);
 			}
 			return value;
@@ -69,7 +75,13 @@ export function createMockExecuteFunctions(opts: MockExecuteOptions = {}): IExec
 			}),
 			constructExecutionMetaData: jest
 				.fn()
-				.mockImplementation((items: INodeExecutionData[]) => items),
+				.mockImplementation(
+					(items: INodeExecutionData[], options: { itemData?: { item: number } }) =>
+						items.map((item) => ({
+							...item,
+							pairedItem: options.itemData,
+						})),
+				),
 			assertBinaryData,
 			getBinaryDataBuffer,
 		},
