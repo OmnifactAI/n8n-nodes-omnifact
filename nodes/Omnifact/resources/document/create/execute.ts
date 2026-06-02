@@ -15,7 +15,17 @@ export async function executeCreate(
 ): Promise<INodeExecutionData[]> {
 	const spaceId = this.getNodeParameter('spaceId', itemIndex) as string;
 	const binaryPropertyName = this.getNodeParameter('binaryPropertyName', itemIndex) as string;
-	const additionalFields = this.getNodeParameter('additionalFields', itemIndex) as IDataObject;
+	const additionalFields = this.getNodeParameter('additionalFields', itemIndex, {}) as IDataObject;
+	const metadata = this.getNodeParameter('metadata', itemIndex, {
+		values: [],
+	}) as IDataObject;
+	const metadataValues = (metadata.values ?? []) as Array<{ key?: string; value?: string }>;
+	const metadataBody = metadataValues.reduce<IDataObject>((acc, { key, value }) => {
+		if (key) {
+			acc[key] = value ?? '';
+		}
+		return acc;
+	}, {});
 
 	const items = this.getInputData();
 	const itemBinaryData = items[itemIndex].binary;
@@ -44,13 +54,8 @@ export async function executeCreate(
 	const file = new Blob([dataBuffer], { type: mimeType });
 	formData.append('file', file, fileName);
 
-	if (additionalFields.metadata) {
-		formData.append(
-			'metadata',
-			typeof additionalFields.metadata === 'string'
-				? additionalFields.metadata
-				: JSON.stringify(additionalFields.metadata),
-		);
+	if (Object.keys(metadataBody).length > 0) {
+		formData.append('metadata', JSON.stringify(metadataBody));
 	}
 
 	const options: IHttpRequestOptions = {

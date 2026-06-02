@@ -24,8 +24,8 @@ export const createDescription: INodeProperties[] = [
 		displayName: 'Additional Fields',
 		name: 'additionalFields',
 		type: 'collection',
-		placeholder: 'Add Field',
 		default: {},
+		placeholder: 'Add Field',
 		displayOptions: { show: { resource: ['document'], operation: ['create'] } },
 		options: [
 			{
@@ -33,14 +33,43 @@ export const createDescription: INodeProperties[] = [
 				name: 'name',
 				type: 'string',
 				default: '',
-				description: 'Override the filename of the uploaded document',
+				placeholder: 'e.g. Contract.pdf',
+				description: 'The name to use for the uploaded document',
 			},
+		],
+	},
+	{
+		displayName: 'Metadata',
+		name: 'metadata',
+		type: 'fixedCollection',
+		typeOptions: {
+			multipleValues: true,
+		},
+		default: {
+			values: [],
+		},
+		displayOptions: { show: { resource: ['document'], operation: ['create'] } },
+		placeholder: 'Add Metadata Field',
+		options: [
 			{
-				displayName: 'Metadata',
-				name: 'metadata',
-				type: 'json',
-				default: '{}',
-				description: 'Additional metadata to attach to the document as JSON',
+				displayName: 'Metadata Field',
+				name: 'values',
+				values: [
+					{
+						displayName: 'Key',
+						name: 'key',
+						type: 'string',
+						default: '',
+						description: 'The key of the metadata to update',
+					},
+					{
+						displayName: 'Value',
+						name: 'value',
+						type: 'string',
+						default: '',
+						description: 'The value of the metadata to update',
+					},
+				],
 			},
 		],
 	},

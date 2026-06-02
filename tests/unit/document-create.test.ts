@@ -12,7 +12,7 @@ describe('Document: Create', () => {
 				operation: 'create',
 				spaceId: 'space-123',
 				binaryPropertyName: 'data',
-				additionalFields: {},
+				metadata: { values: [] },
 			},
 			binaryData: {
 				data: {
@@ -40,6 +40,33 @@ describe('Document: Create', () => {
 		expect((opts.body as FormData).get('file')).toBeInstanceOf(Blob);
 	});
 
+	it('should use file name from binary data', async () => {
+		const fileBuffer = Buffer.from('file content');
+		const mock = createMockExecuteFunctions({
+			params: {
+				resource: 'document',
+				operation: 'create',
+				spaceId: 'space-123',
+				binaryPropertyName: 'data',
+				metadata: { values: [] },
+			},
+			binaryData: {
+				data: { fileName: 'original.pdf', mimeType: 'application/pdf', data: '' },
+			},
+			binaryBuffers: { data: fileBuffer },
+		});
+
+		(mock.helpers.httpRequestWithAuthentication as jest.Mock).mockResolvedValue({ id: 'doc-1' });
+
+		await node.execute.call(mock);
+
+		const opts = (mock.helpers.httpRequestWithAuthentication as jest.Mock).mock.calls[0][1];
+		expect(opts.body).toBeInstanceOf(FormData);
+		expect(((opts.body as FormData).get('file') as { name?: string }).name).toBe(
+			'original.pdf',
+		);
+	});
+
 	it('should use custom name from additional fields', async () => {
 		const fileBuffer = Buffer.from('file content');
 		const mock = createMockExecuteFunctions({
@@ -49,6 +76,7 @@ describe('Document: Create', () => {
 				spaceId: 'space-123',
 				binaryPropertyName: 'data',
 				additionalFields: { name: 'custom-name.pdf' },
+				metadata: { values: [] },
 			},
 			binaryData: {
 				data: { fileName: 'original.pdf', mimeType: 'application/pdf', data: '' },
@@ -75,7 +103,7 @@ describe('Document: Create', () => {
 				operation: 'create',
 				spaceId: 'space-123',
 				binaryPropertyName: 'data',
-				additionalFields: { metadata: '{"key":"value"}' },
+				metadata: { values: [{ key: 'key', value: 'value' }] },
 			},
 			binaryData: {
 				data: { fileName: 'test.pdf', mimeType: 'application/pdf', data: '' },
@@ -99,7 +127,7 @@ describe('Document: Create', () => {
 				operation: 'create',
 				spaceId: 'space-123',
 				binaryPropertyName: 'data',
-				additionalFields: {},
+				metadata: { values: [] },
 			},
 			// No binaryData provided
 		});
@@ -117,7 +145,7 @@ describe('Document: Create', () => {
 				operation: 'create',
 				spaceId: 'space-123',
 				binaryPropertyName: 'data',
-				additionalFields: {},
+				metadata: { values: [] },
 			},
 			binaryData: {
 				data: { fileName: 'test.pdf', mimeType: 'application/pdf', data: '' },
@@ -154,7 +182,7 @@ describe('Document: Create', () => {
 				operation: 'create',
 				spaceId: 'space-123',
 				binaryPropertyName: 'data',
-				additionalFields: {},
+				metadata: { values: [] },
 			},
 			binaryData: {
 				data: { fileName: 'test.pdf', mimeType: 'application/pdf', data: '' },
