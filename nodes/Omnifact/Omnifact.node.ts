@@ -6,6 +6,8 @@ import type {
 } from 'n8n-workflow';
 import { NodeConnectionTypes, NodeOperationError } from 'n8n-workflow';
 
+import { executeApiGatewayOperation } from './resources/apiGateway/execute';
+import { apiGatewayDescription } from './resources/apiGateway/index';
 import {
 	executeChatOperation,
 	formatDocumentPartsAsMarkdown,
@@ -34,7 +36,7 @@ export class Omnifact implements INodeType {
 			{
 				name: 'omnifactApi',
 				required: true,
-				displayOptions: { show: { resource: ['document'] } },
+				displayOptions: { show: { resource: ['apiGateway', 'document'] } },
 			},
 		],
 		properties: [
@@ -44,11 +46,13 @@ export class Omnifact implements INodeType {
 				type: 'options',
 				noDataExpression: true,
 				options: [
+					{ name: 'API Gateway', value: 'apiGateway' },
 					{ name: 'Chat', value: 'chat' },
 					{ name: 'Document', value: 'document' },
 				],
 				default: 'chat',
 			},
+			...apiGatewayDescription,
 			...chatDescription,
 			...documentDescription,
 		],
@@ -62,7 +66,9 @@ export class Omnifact implements INodeType {
 
 		for (let i = 0; i < items.length; i++) {
 			try {
-				if (resource === 'chat') {
+				if (resource === 'apiGateway') {
+					returnData.push(...(await executeApiGatewayOperation.call(this, operation, i)));
+				} else if (resource === 'chat') {
 					returnData.push(...(await executeChatOperation.call(this, operation, i)));
 				} else if (resource === 'document') {
 					returnData.push(...(await executeDocumentOperation.call(this, operation, i)));

@@ -42,4 +42,17 @@ describe('Operation Dispatch', () => {
 			/Unsupported document operation "unsupported"/,
 		);
 	});
+
+	it('should throw for unsupported API Gateway operations', async () => {
+		const mock = createMockExecuteFunctions({
+			params: {
+				resource: 'apiGateway',
+				operation: 'unsupported',
+			},
+		});
+
+		await expect(node.execute.call(mock)).rejects.toThrow(
+			/Unsupported API Gateway operation "unsupported"/,
+		);
+	});
 });
