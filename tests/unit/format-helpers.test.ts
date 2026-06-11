@@ -18,15 +18,21 @@ describe('formatInlineSourcesAsMarkdown', () => {
 				documentId: 'doc-1',
 				documentName: 'Report.pdf',
 				page: 5,
+				partIndex: 0,
+				partName: 'paragraph 3',
 				sourceId: 'src-1',
 				sourceType: 'document',
+				messageId: 'message-1',
 			},
 			{
 				documentId: 'doc-2',
 				documentName: 'Guide.pdf',
 				page: null,
+				partIndex: 1,
+				partName: 'section 1',
 				sourceId: 'src-2',
 				sourceType: 'document',
+				messageId: 'message-1',
 			},
 		];
 		const result = formatInlineSourcesAsMarkdown('Answer text', sources);
@@ -50,8 +56,8 @@ describe('formatDocumentPartsAsMarkdown', () => {
 
 	it('should append footnotes with document part info', () => {
 		const parts = [
-			{ documentId: 'doc-1', type: 'paragraph', number: 3 },
-			{ documentId: 'doc-2', type: 'section', number: 1 },
+			{ documentId: 'doc-1', type: 'paragraph', number: 3, partIndex: 0, partName: 'paragraph 3' },
+			{ documentId: 'doc-2', type: 'section', number: 1, partIndex: 1, partName: 'section 1' },
 		];
 		const result = formatDocumentPartsAsMarkdown('Answer text', parts);
 		expect(result).toContain('Answer text');

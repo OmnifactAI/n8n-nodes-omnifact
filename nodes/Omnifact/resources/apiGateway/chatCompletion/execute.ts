@@ -21,10 +21,12 @@ export async function executeChatCompletion(
 	}) as IDataObject;
 	const additionalFields = this.getNodeParameter('additionalFields', itemIndex, {}) as IDataObject;
 
-	const messages = ((messagesCollection.values ?? []) as ChatMessage[]).map(({ role, content }) => ({
-		role,
-		content,
-	}));
+	const messages = ((messagesCollection.values ?? []) as ChatMessage[]).map(
+		({ role, content }) => ({
+			role,
+			content,
+		}),
+	);
 
 	if (messages.length === 0) {
 		throw new NodeOperationError(this.getNode(), 'At least one message is required', {

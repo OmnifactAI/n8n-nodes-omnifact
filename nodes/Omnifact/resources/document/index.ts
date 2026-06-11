@@ -42,7 +42,7 @@ export const documentDescription: INodeProperties[] = [
 				name: 'Update',
 				value: 'update',
 				action: 'Update a document',
-				description: 'Update a document name',
+				description: 'Update a document name or metadata',
 			},
 		],
 		default: 'get',

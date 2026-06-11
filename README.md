@@ -25,6 +25,11 @@ The **Chat** resource uses unauthenticated endpoint URLs and does not require cr
 
 ## Resources
 
+### API Gateway
+
+- **Create Chat Completion** — Create an OpenAI-compatible chat completion
+- **List Models** — List enabled OpenAI-compatible models
+
 ### Chat
 
 - **Send** — Send a message to an Omnifact chat endpoint
@@ -35,7 +40,7 @@ The **Chat** resource uses unauthenticated endpoint URLs and does not require cr
 - **Delete** — Delete a document by ID
 - **Get** — Retrieve a document by ID
 - **Get Many** — List documents in a space (with pagination)
-- **Update** — Rename a document
+- **Update** — Update a document name, metadata, or both
 
 ## Development
 

@@ -97,7 +97,8 @@ describe('Chat: Send', () => {
 
 		const result = await node.execute.call(mock);
 		expect(result[0][0].json.text).toContain('[1] doc-1 (paragraph 2)');
-		expect(result[0][0].json.documentParts).toHaveLength(1);
+		expect(result[0][0].json.references).toMatchObject(response.references);
+		expect(result[0][0].json.documentParts).toBeUndefined();
 	});
 
 	it('should send custom headers for additional fields', async () => {

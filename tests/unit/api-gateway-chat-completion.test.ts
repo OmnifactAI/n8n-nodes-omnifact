@@ -106,12 +106,16 @@ describe('API Gateway: Create Chat Completion', () => {
 		const result = await node.execute.call(mock);
 
 		expect(mock.helpers.httpRequestWithAuthentication).toHaveBeenCalledTimes(2);
-		expect((mock.helpers.httpRequestWithAuthentication as jest.Mock).mock.calls[0][1].body).toMatchObject({
+		expect(
+			(mock.helpers.httpRequestWithAuthentication as jest.Mock).mock.calls[0][1].body,
+		).toMatchObject({
 			model: 'gpt-4o',
 			messages: [{ role: 'user', content: 'First' }],
 			stream: false,
 		});
-		expect((mock.helpers.httpRequestWithAuthentication as jest.Mock).mock.calls[1][1].body).toMatchObject({
+		expect(
+			(mock.helpers.httpRequestWithAuthentication as jest.Mock).mock.calls[1][1].body,
+		).toMatchObject({
 			model: 'eu/claude-4-6-sonnet',
 			messages: [{ role: 'user', content: 'Second' }],
 			stream: false,

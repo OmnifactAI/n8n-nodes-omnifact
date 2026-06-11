@@ -105,13 +105,6 @@ function formatChatResponse(response: OmnifactChatResponse, outputFormat: string
 		} else if (response.references) {
 			outputData.references = response.references;
 		}
-		if (
-			response.references &&
-			response.references.documentParts &&
-			response.references.documentParts.length > 0
-		) {
-			outputData.documentParts = response.references.documentParts as unknown as IDataObject[];
-		}
 
 		return outputData;
 	}
@@ -127,13 +120,6 @@ function formatChatResponse(response: OmnifactChatResponse, outputFormat: string
 	}
 	if (response.references) {
 		outputData.references = response.references;
-	}
-	if (
-		response.references &&
-		response.references.documentParts &&
-		response.references.documentParts.length > 0
-	) {
-		outputData.documentParts = response.references.documentParts as unknown as IDataObject[];
 	}
 
 	return outputData;

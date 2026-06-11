@@ -61,7 +61,50 @@ describe('Document: Update', () => {
 		});
 	});
 
-	it('should return error json when continueOnFail is true', async () => {
+	it('should PATCH metadata without requiring a name', async () => {
+		const mock = createMockExecuteFunctions({
+			params: {
+				resource: 'document',
+				operation: 'update',
+				documentId: 'doc-123',
+				metadata: {
+					values: [{ key: 'department', value: 'Legal' }],
+				},
+			},
+		});
+
+		(mock.helpers.httpRequestWithAuthentication as jest.Mock).mockResolvedValue({
+			id: 'doc-123',
+		});
+
+		await node.execute.call(mock);
+
+		const opts = (mock.helpers.httpRequestWithAuthentication as jest.Mock).mock.calls[0][1];
+		expect(opts.body).toEqual({
+			metadata: {
+				department: 'Legal',
+			},
+		});
+	});
+
+	it('should reject updates without a name or metadata', async () => {
+		const mock = createMockExecuteFunctions({
+			params: {
+				resource: 'document',
+				operation: 'update',
+				documentId: 'doc-123',
+				name: '',
+				metadata: { values: [] },
+			},
+		});
+
+		await expect(node.execute.call(mock)).rejects.toThrow(
+			/Provide a name or at least one metadata field/,
+		);
+		expect(mock.helpers.httpRequestWithAuthentication).not.toHaveBeenCalled();
+	});
+
+	it('should return API error details when continueOnFail is true', async () => {
 		const mock = createMockExecuteFunctions({
 			params: {
 				resource: 'document',
@@ -72,13 +115,23 @@ describe('Document: Update', () => {
 			continueOnFail: true,
 		});
 
-		(mock.helpers.httpRequestWithAuthentication as jest.Mock).mockRejectedValue(
-			new Error('Update failed'),
-		);
+		const apiError = Object.assign(new Error('Bad request'), {
+			context: {
+				data: {
+					code: 'document_update_failed',
+					message: 'The document name is invalid.',
+				},
+			},
+		});
+		(mock.helpers.httpRequestWithAuthentication as jest.Mock).mockRejectedValue(apiError);
 
 		const result = await node.execute.call(mock);
 
-		expect(result[0][0].json).toEqual({ error: 'Update failed' });
+		expect(result[0][0].json).toMatchObject({
+			documentId: 'doc-123',
+			error: 'document_update_failed',
+			errorMessage: 'The document name is invalid.',
+		});
 		expect(result[0][0].pairedItem).toEqual({ item: 0 });
 	});
 
@@ -92,10 +145,17 @@ describe('Document: Update', () => {
 			},
 		});
 
-		(mock.helpers.httpRequestWithAuthentication as jest.Mock).mockRejectedValue(
-			new Error('Update failed'),
-		);
+		const apiError = Object.assign(new Error('Bad request'), {
+			context: {
+				data: {
+					message: 'The document name is invalid.',
+				},
+			},
+		});
+		(mock.helpers.httpRequestWithAuthentication as jest.Mock).mockRejectedValue(apiError);
 
-		await expect(node.execute.call(mock)).rejects.toThrow(/Update failed/);
+		await expect(node.execute.call(mock)).rejects.toThrow(
+			/Document update failed: The document name is invalid/,
+		);
 	});
 });

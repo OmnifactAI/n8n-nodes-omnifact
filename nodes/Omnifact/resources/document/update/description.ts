@@ -15,7 +15,6 @@ export const updateDescription: INodeProperties[] = [
 		displayName: 'Name',
 		name: 'name',
 		type: 'string',
-		required: true,
 		default: '',
 		description: 'The new name for the document',
 		displayOptions: { show: { resource: ['document'], operation: ['update'] } },
@@ -32,6 +31,7 @@ export const updateDescription: INodeProperties[] = [
 		},
 		displayOptions: { show: { resource: ['document'], operation: ['update'] } },
 		placeholder: 'Add Metadata Field',
+		description: 'Metadata fields to update on the document',
 		options: [
 			{
 				displayName: 'Metadata Field',
