@@ -1,509 +1,85 @@
-# n8n Community Node: Omnifact
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project Overview
 
-n8n community node package for the Omnifact API. Package name: `n8n-nodes-omnifact`.
+n8n community node package for the Omnifact API. Package name: `n8n-nodes-omnifact`. The node is **programmatic** (single `execute()` with manual dispatch), not declarative — keep it that way; don't convert operations to declarative `routing`.
 
-## Project Structure
+API base URL: `https://connect.omnifact.ai`. Auth is an `X-API-Key` header via the `omnifactApi` credential. The **Chat** resource is unauthenticated (per-endpoint URLs); credentials are only required for the **API Gateway** and **Document** resources (enforced via `displayOptions` on the credentials entry in `Omnifact.node.ts`).
 
-```
-n8n-nodes-omnifact/
-├── credentials/
-│   └── OmnifactApi.credentials.ts
-├── nodes/
-│   └── Omnifact/
-│       ├── Omnifact.node.ts          # Main node file (class name = filename)
-│       ├── Omnifact.node.json        # Codex metadata
-│       ├── omnifact.svg              # Light icon
-│       ├── omnifact.dark.svg         # Dark icon
-│       ├── resources/
-│       │   └── <resourceName>/
-│       │       ├── index.ts          # INodeProperties[] for this resource
-│       │       ├── create.ts
-│       │       ├── get.ts
-│       │       └── getAll.ts
-│       └── shared/
-│           ├── descriptions.ts       # Shared field definitions
-│           └── transport.ts          # HTTP helper functions
-├── icons/
-│   ├── omnifact.svg
-│   └── omnifact.dark.svg
-├── package.json
-├── tsconfig.json
-├── eslint.config.mjs
-└── .prettierrc.js
-```
-
-## package.json
-
-Required fields:
-- `name`: must start with `n8n-nodes-`
-- `keywords`: must include `"n8n-community-node-package"`
-- `n8n.n8nNodesApiVersion`: `1`
-- `n8n.strict`: `true`
-- `n8n.credentials`: array of `dist/` paths to credential files
-- `n8n.nodes`: array of `dist/` paths to node files
-- `files`: `["dist"]`
-- `peerDependencies`: `{ "n8n-workflow": "*" }` (NOT a regular dep)
-- `devDependencies`: `@n8n/node-cli`, `eslint`, `prettier`, `typescript`
-
-Scripts:
-```json
-{
-  "build": "n8n-node build",
-  "dev": "n8n-node dev",
-  "lint": "n8n-node lint",
-  "lint:fix": "n8n-node lint --fix",
-  "release": "n8n-node release",
-  "prepublishOnly": "n8n-node prerelease"
-}
-```
-
-## Choosing Node Style
-
-**Declarative** (preferred): REST APIs, config-driven routing, no `execute()` method needed. Simpler, less error-prone, more future-proof.
-
-**Programmatic** (when required): trigger nodes, GraphQL, external npm deps, complex data transforms, full versioning.
-
-## Declarative Node Anatomy
-
-```typescript
-import { NodeConnectionTypes } from 'n8n-workflow';
-import type { INodeType, INodeTypeDescription } from 'n8n-workflow';
-
-export class Omnifact implements INodeType {
-  description: INodeTypeDescription = {
-    displayName: 'Omnifact',               // Title Case
-    name: 'omnifact',                      // camelCase, unique
-    icon: { light: 'file:omnifact.svg', dark: 'file:omnifact.dark.svg' },
-    group: ['transform'],
-    version: 1,
-    subtitle: '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
-    description: 'Interact with the Omnifact API',  // Sentence case
-    defaults: { name: 'Omnifact' },
-    usableAsTool: true,
-    inputs: [NodeConnectionTypes.Main],
-    outputs: [NodeConnectionTypes.Main],
-    credentials: [{ name: 'omnifactApi', required: true }],
-    requestDefaults: {
-      baseURL: 'https://api.omnifact.ai',
-      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
-    },
-    properties: [
-      // Resource selector (always first)
-      {
-        displayName: 'Resource',
-        name: 'resource',
-        type: 'options',
-        noDataExpression: true,          // REQUIRED on resource
-        options: [{ name: 'MyResource', value: 'myResource' }],
-        default: 'myResource',
-      },
-      // Operation selector (per resource via displayOptions)
-      {
-        displayName: 'Operation',
-        name: 'operation',
-        type: 'options',
-        noDataExpression: true,          // REQUIRED on operation
-        displayOptions: { show: { resource: ['myResource'] } },
-        options: [
-          {
-            name: 'Get',
-            value: 'get',
-            action: 'Get a resource',    // Sentence case, include resource name
-            routing: {
-              request: { method: 'GET', url: '/v1/resources/{{$parameter.resourceId}}' },
-            },
-          },
-        ],
-        default: 'get',
-      },
-      // ...spread resource descriptions
-    ],
-  };
-}
-```
-
-### Routing on fields
-
-```typescript
-// Send field value in request body
-routing: { send: { type: 'body', property: 'title' } }
-
-// Send in query string
-routing: { send: { type: 'query', property: 'per_page' } }
-
-// Transform value in qs
-routing: { request: { qs: { date: '={{ new Date($value).toISOString().substr(0,10) }}' } } }
-```
-
-## Programmatic Node Anatomy
-
-```typescript
-import type { IExecuteFunctions, INodeExecutionData, INodeType, INodeTypeDescription, IDataObject, IHttpRequestOptions } from 'n8n-workflow';
-import { NodeConnectionTypes, NodeOperationError } from 'n8n-workflow';
-
-export class Omnifact implements INodeType {
-  description: INodeTypeDescription = { /* same as declarative minus requestDefaults/routing */ };
-
-  async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
-    const items = this.getInputData();
-    const returnData: INodeExecutionData[] = [];
-    const resource = this.getNodeParameter('resource', 0);
-    const operation = this.getNodeParameter('operation', 0);
-
-    for (let i = 0; i < items.length; i++) {
-      try {
-        if (resource === 'myResource') {
-          if (operation === 'get') {
-            const id = this.getNodeParameter('resourceId', i) as string;
-            const options: IHttpRequestOptions = {
-              method: 'GET',
-              url: `https://api.omnifact.ai/v1/resources/${id}`,
-              json: true,
-            };
-            const responseData = await this.helpers.httpRequestWithAuthentication.call(
-              this, 'omnifactApi', options,
-            );
-            const executionData = this.helpers.constructExecutionMetaData(
-              this.helpers.returnJsonArray(responseData as IDataObject),
-              { itemData: { item: i } },
-            );
-            returnData.push(...executionData);
-          }
-        }
-      } catch (error) {
-        if (this.continueOnFail()) {
-          const executionData = this.helpers.constructExecutionMetaData(
-            this.helpers.returnJsonArray({ error: error.message }),
-            { itemData: { item: i } },
-          );
-          returnData.push(...executionData);
-          continue;
-        }
-        throw error;
-      }
-    }
-    return [returnData];
-  }
-}
-```
-
-## Credentials
-
-```typescript
-import type { IAuthenticateGeneric, Icon, ICredentialTestRequest, ICredentialType, INodeProperties } from 'n8n-workflow';
-
-export class OmnifactApi implements ICredentialType {
-  name = 'omnifactApi';
-  displayName = 'Omnifact API';
-  icon: Icon = { light: 'file:../icons/omnifact.svg', dark: 'file:../icons/omnifact.dark.svg' };
-  documentationUrl = 'https://docs.omnifact.ai';
-  properties: INodeProperties[] = [
-    {
-      displayName: 'API Key',
-      name: 'apiKey',
-      type: 'string',
-      typeOptions: { password: true },
-      default: '',
-    },
-  ];
-  // Header auth
-  authenticate: IAuthenticateGeneric = {
-    type: 'generic',
-    properties: { headers: { Authorization: '=Bearer {{$credentials.apiKey}}' } },
-  };
-  // Optional test request
-  test: ICredentialTestRequest = {
-    request: { baseURL: 'https://api.omnifact.ai', url: '/v1/me', method: 'GET' },
-  };
-}
-```
-
-Auth placement variants: `properties.headers`, `properties.qs`, `properties.body`, `properties.auth` (basic).
-
-OAuth2: set `extends = ['oAuth2Api']` and provide hidden fields for `authUrl`, `accessTokenUrl`, `scope`, `grantType`.
-
-## Resource/Operation File Pattern
-
-Each resource gets its own directory under `resources/`:
-
-```typescript
-// resources/myResource/index.ts
-import type { INodeProperties } from 'n8n-workflow';
-
-export const myResourceDescription: INodeProperties[] = [
-  {
-    displayName: 'Operation',
-    name: 'operation',
-    type: 'options',
-    noDataExpression: true,
-    displayOptions: { show: { resource: ['myResource'] } },
-    options: [
-      { name: 'Get', value: 'get', action: 'Get a resource', routing: { request: { method: 'GET', url: '=/v1/resources/{{$parameter.resourceId}}' } } },
-      { name: 'Get Many', value: 'getAll', action: 'Get many resources', routing: { request: { method: 'GET', url: '/v1/resources' } } },
-    ],
-    default: 'get',
-  },
-  // ...field definitions with displayOptions scoped to this resource+operation
-];
-```
-
-Main node file spreads them: `properties: [resourceParam, ...myResourceDescription, ...otherResourceDescription]`.
-
-## UI Design Rules
-
-- **Title Case**: `displayName` on nodes, parameters, dropdown option `name`
-- **Sentence case**: `description`, `action`, `hint` fields
-- **Boolean descriptions**: must start with "Whether..."
-- **Placeholders**: start with "e.g. ..."
-- **Operation `action`**: must include resource name — "Get issues in a repository"
-- **Field ordering**: Resource > Operation > required fields > Additional Fields collection
-- **`noDataExpression: true`**: required on `resource` and `operation` params
-- **Optional fields**: group under `Additional Fields` (`type: 'collection'`, `placeholder: 'Add Field'`)
-- **Resource Locator**: use `type: 'resourceLocator'` wherever user selects a single external item
-- **Simplify param**: add when response has >10 fields
-- **Delete ops**: return `[{ deleted: true }]`
-- **CRUD naming**: Create, Get, Get Many, Update, Delete, (Create or Update)
-
-### displayOptions
-
-```typescript
-displayOptions: { show: { resource: ['myResource'], operation: ['create'] } }
-```
-
-## Pagination (returnAll / limit)
-
-### Declarative (Link header)
-
-```typescript
-// On the "Return All" boolean:
-{
-  displayName: 'Return All',
-  name: 'returnAll',
-  type: 'boolean',
-  default: false,
-  displayOptions: { show: { resource: ['myResource'], operation: ['getAll'] } },
-  description: 'Whether to return all results or only up to a given limit',
-  routing: { send: { paginate: '={{ $value }}' } },
-}
-// On the limit field:
-{
-  displayName: 'Limit',
-  name: 'limit',
-  type: 'number',
-  default: 50,
-  typeOptions: { minValue: 1 },
-  displayOptions: { show: { resource: ['myResource'], operation: ['getAll'], returnAll: [false] } },
-  description: 'Max number of results to return',
-  routing: {
-    send: { type: 'query', property: 'per_page', value: '100' },
-    output: { maxResults: '={{$value}}' },
-  },
-}
-// Pagination config on the operation:
-routing: {
-  request: { method: 'GET', url: '/v1/resources' },
-  operations: {
-    pagination: {
-      type: 'generic',
-      properties: {
-        continue: '={{ !!parseLinkHeader($response.headers?.link).next }}',
-        request: { url: '={{ parseLinkHeader($response.headers?.link)?.next ?? $request.url }}' },
-      },
-    },
-  },
-}
-```
-
-### Programmatic
-
-Loop with offset/cursor, push results into array, respect `returnAll` / `limit` params.
-
-## Node Codex File
-
-```json
-{
-  "node": "n8n-nodes-omnifact.omnifact",
-  "nodeVersion": "1.0",
-  "codexVersion": "1.0",
-  "categories": ["Development"],
-  "resources": {
-    "primaryDocumentation": [{ "url": "https://github.com/org/repo" }],
-    "credentialDocumentation": [{ "url": "https://docs.omnifact.ai/auth" }]
-  }
-}
-```
-
-Categories: `Data & Storage`, `Finance & Accounting`, `Marketing & Content`, `Productivity`, `Miscellaneous`, `Sales`, `Development`, `Analytics`, `Communication`, `Utility`.
-
-## Icons
-
-- Provide SVG pair: `omnifact.svg` (light) and `omnifact.dark.svg` (dark)
-- Reference: `icon: { light: 'file:omnifact.svg', dark: 'file:omnifact.dark.svg' }`
-- Place in node directory and/or `icons/` directory (credentials reference `../icons/`)
-
-## Code Standards
-
-- **TypeScript strict mode** (`tsconfig.json` has `strict: true`)
-- **Class name must match filename** — `Omnifact` class in `Omnifact.node.ts`
-- **HTTP requests**: only `this.helpers.httpRequest()` or `this.helpers.httpRequestWithAuthentication()` — never axios/fetch/got
-- **Never mutate input data** — clone first
-- **Always include paired item data** via `constructExecutionMetaData` or `pairedItem`
-- **Error handling**: `NodeOperationError(this.getNode(), error, { itemIndex })` + `continueOnFail()` guard
-- **Reuse field `value` strings** across operations so data persists when user switches
-- **No external npm dependencies** for verified nodes
-- **No env var or filesystem access**
-- **ESLint**: `eslint.config.mjs` exports `config` from `@n8n/node-cli/eslint`
-- **Prettier**: tabs, single quotes, trailing commas, 100 char width, LF line endings
-
-## Key TypeScript Imports
-
-```typescript
-// Values
-import { NodeConnectionTypes, NodeOperationError } from 'n8n-workflow';
-
-// Types
-import type {
-  INodeType, INodeTypeDescription, INodeProperties, INodePropertyOptions,
-  IExecuteFunctions, ILoadOptionsFunctions, INodeExecutionData, IDataObject,
-  IHttpRequestOptions, IHttpRequestMethods,
-  ICredentialType, IAuthenticateGeneric, ICredentialTestRequest, Icon,
-  INodeListSearchItems, INodeListSearchResult,
-} from 'n8n-workflow';
-```
-
-## Config Files
-
-### tsconfig.json
-```json
-{
-  "compilerOptions": {
-    "strict": true, "module": "commonjs", "moduleResolution": "node",
-    "target": "es2019", "lib": ["es2019", "es2020", "es2022.error"],
-    "removeComments": true, "useUnknownInCatchVariables": false,
-    "forceConsistentCasingInFileNames": true, "noImplicitAny": true,
-    "noImplicitReturns": true, "noUnusedLocals": true, "strictNullChecks": true,
-    "preserveConstEnums": true, "esModuleInterop": true, "resolveJsonModule": true,
-    "incremental": true, "declaration": true, "sourceMap": true,
-    "skipLibCheck": true, "outDir": "./dist/"
-  },
-  "include": ["credentials/**/*", "nodes/**/*", "nodes/**/*.json", "package.json"]
-}
-```
-
-### eslint.config.mjs
-```js
-import { config } from '@n8n/node-cli/eslint';
-export default config;
-```
-
-### .prettierrc.js
-```js
-module.exports = {
-  semi: true, trailingComma: 'all', bracketSpacing: true, useTabs: true,
-  tabWidth: 2, arrowParens: 'always', singleQuote: true, quoteProps: 'as-needed',
-  endOfLine: 'lf', printWidth: 100,
-};
-```
-
-## Dev Workflow
+## Commands
 
 ```bash
-npm install          # Install deps
 npm run dev          # Launch n8n with node loaded (hot reload)
-npm run build        # Compile to dist/
-npm run lint         # Check lint
-npm run lint:fix     # Auto-fix lint issues
+npm run build        # Compile to dist/ (n8n-node build)
+npm run lint         # n8n-node lint
+npm run lint:fix
+npm test             # Jest, all tests
+npm test -- chat-send                       # Single test file by name match
+npx jest tests/unit/document-create.test.ts # Single test file by path
+npm run test:watch
+npm run test:coverage
 ```
 
-## Publishing
+Verify substantive changes with `npm run lint`, `npm run build`, and `npm test`.
 
-1. `npm run build`
-2. `npm publish`
-3. Ensure: name starts with `n8n-nodes-`, keyword `n8n-community-node-package`, MIT license, `peerDependencies: { "n8n-workflow": "*" }`
+## Architecture
+
+Two parallel chains, both rooted in `nodes/Omnifact/Omnifact.node.ts`:
+
+1. **UI descriptions**: `Omnifact.node.ts` `properties` spreads each resource's `resources/<resource>/index.ts`, which defines the Operation selector and spreads each `<operation>/description.ts` (`INodeProperties[]` scoped via `displayOptions`).
+2. **Execution**: `Omnifact.node.ts` `execute()` loops items, dispatching per resource to `resources/<resource>/execute.ts`, which dispatches per operation to `<operation>/execute.ts` (`executeX.call(this, itemIndex)` returning `INodeExecutionData[]`).
+
+```
+nodes/Omnifact/resources/
+├── apiGateway/   # chatCompletion, models — OpenAI-compatible gateway (/v1/gateway/...)
+├── chat/         # send — unauthenticated /v1/endpoints/{endpointId}/chat
+│   └── types.ts  # OmnifactChatResponse, inline sources / document parts
+└── document/     # create, delete, get, getAll, update — /v1/documents
+    ├── types.ts  # MultipartRequestBody
+    └── utils.ts  # toExecutionData() helper
+```
+
+**Adding an operation**: create `<resource>/<newOp>/description.ts` + `execute.ts`, register in the resource's `index.ts` (Operation options + spread) and `execute.ts` (dispatch). **Adding a resource**: also register in `Omnifact.node.ts` — Resource options, properties spread, execute dispatch, and the credentials `displayOptions` list if authenticated.
+
+Error handling lives in the main `execute()` loop: per-item try/catch, `continueOnFail()` returns `{ error: message }` items, otherwise wraps in `NodeOperationError` with `itemIndex`. Operation files throw; document `create` additionally shapes upload errors itself (extracts `error.context.data.code/message`).
+
+### Notable implementation details
+
+- **Document create (file upload)** uses the platform `FormData`/`Blob` API (required for n8n Cloud), not the legacy `form-data` package — n8n's request body type doesn't know this, hence the `MultipartRequestBody` cast in `document/types.ts`.
+- **Pagination** (document getAll) is offset-based: page size 100, response shape `{ items, total }`, respects `returnAll`/`limit`.
+- **Chat send** formats responses via pure functions `formatInlineSourcesAsMarkdown` / `formatDocumentPartsAsMarkdown` (in `chat/send/execute.ts`), re-exported from `Omnifact.node.ts` so tests can import them directly. Inline sources / agentic workflow are toggled via `omnifact-enable-*` request headers.
+- Credential test request hits `GET /v1/documents/supported-file-types`.
 
 ## Testing
 
-n8n has no official test harness for community nodes. Use **Jest + ts-jest** with mocked `IExecuteFunctions`.
+Jest + ts-jest; tests in `tests/unit/*.test.ts`, mock factory at `tests/mocks/mockExecuteFunctions.ts` (`createMockExecuteFunctions({ params, items, continueOnFail, binaryData, binaryBuffers, paramsByItem })`). Call operations via `node.execute.call(mockFns)` or the operation's `executeX.call(mockFns, itemIndex)`, then assert on HTTP call args (method, URL, body) and output shape.
 
-### Setup
+What to cover per change: HTTP method/URL/body, output shape, pagination/limit edge cases, `continueOnFail()` true (error json) vs false (throws `NodeOperationError`). Test pure formatters directly without mocks.
 
-```bash
-npm install --save-dev jest ts-jest @types/jest
-# n8n-workflow must also be in devDependencies (not just peerDeps) for test imports
-```
+## Code Standards
 
-Add scripts: `"test": "jest"`, `"test:watch": "jest --watch"`, `"test:coverage": "jest --coverage"`
+- TypeScript strict mode; tabs, single quotes, 100-char width (Prettier).
+- HTTP only via `this.helpers.httpRequest()` / `httpRequestWithAuthentication.call(this, 'omnifactApi', options)` — never axios/fetch/got.
+- Always preserve item pairing: `constructExecutionMetaData` (document ops use the `toExecutionData` helper).
+- Never mutate input data; no external runtime dependencies; no env vars or filesystem access in node code.
+- Import runtime values (`NodeConnectionTypes`, `NodeOperationError`) separately from types (`import type {...}`).
+- Reuse field `value` strings across operations so user data persists when switching operations.
 
-### Config
+### n8n UI rules
 
-`jest.config.js`:
-```js
-module.exports = {
-  preset: 'ts-jest',
-  testEnvironment: 'node',
-  roots: ['<rootDir>/tests'],
-  testMatch: ['**/*.test.ts'],
-};
-```
+- Title Case for `displayName` / option `name`; sentence case for `description`, `action`, `hint`.
+- Boolean descriptions start with "Whether..."; placeholders start with "e.g. ...".
+- Operation `action` includes the resource name ("Create a document").
+- Field order: Resource → Operation → required fields → `Additional Fields` collection (`placeholder: 'Add Field'`).
+- `noDataExpression: true` on `resource` and `operation` params.
+- Delete ops return `[{ deleted: true }]`. CRUD naming: Create, Get, Get Many, Update, Delete.
 
-`tsconfig.test.json` (extends main, adds `tests/`):
-```json
-{
-  "extends": "./tsconfig.json",
-  "compilerOptions": { "declaration": false, "incremental": false, "noUnusedLocals": false },
-  "include": ["credentials/**/*", "nodes/**/*", "tests/**/*"]
-}
-```
+## Package constraints
 
-Reference in jest config: `globals: { 'ts-jest': { tsconfig: 'tsconfig.test.json' } }`
+`package.json` must keep: name prefixed `n8n-nodes-`, keyword `n8n-community-node-package`, `files: ["dist"]`, `n8n-workflow` in `peerDependencies` only (it's also in devDependencies for test imports — that's intentional), `n8n.strict: true`, `n8n.nodes`/`n8n.credentials` pointing at `dist/` paths.
 
-### Directory structure
+## Publishing
 
-```
-tests/
-├── mocks/
-│   └── mockExecuteFunctions.ts   # IExecuteFunctions mock factory
-└── unit/
-    ├── chat-send.test.ts
-    ├── document-create.test.ts
-    ├── document-delete.test.ts
-    ├── document-get.test.ts
-    ├── document-getAll.test.ts
-    └── document-update.test.ts
-```
-
-### Mock pattern
-
-Create a factory that returns a mock `IExecuteFunctions` with:
-- `getInputData()` returning test items
-- `getNodeParameter()` backed by a params object (use `lodash.get`)
-- `helpers.httpRequest` / `helpers.httpRequestWithAuthentication` as jest mocks
-- `helpers.returnJsonArray`, `helpers.constructExecutionMetaData` with real-ish impls
-- `helpers.assertBinaryData`, `helpers.getBinaryDataBuffer` for file upload tests
-- `continueOnFail()` returning configurable boolean
-
-Then call `node.execute.call(mockFns)` and assert on results + HTTP call args.
-
-### What to test (priority order)
-
-1. **Pure functions** — export `formatInlineSourcesAsMarkdown` / `formatDocumentPartsAsMarkdown` and test directly (no mocking)
-2. **Each operation** — verify correct HTTP method/URL/body, verify output shape
-3. **Pagination** — getAll with multiple pages, limit enforcement, empty responses
-4. **Error handling** — `continueOnFail` true (returns error json) vs false (throws `NodeOperationError`)
-5. **Credential structure** — verify name, authenticate headers, test endpoint shape
-
-### Reference
-
-- n8n built-in node tests: `packages/nodes-base/nodes/Airtable/test/` in the n8n repo
-- Community example: `n8n-nodes-substack` by Jakub Slys
-
-## Verification Checklist
-
-- [ ] `npm run lint` passes
-- [ ] `npm run build` succeeds
-- [ ] `npm run dev` launches n8n with node loaded
-- [ ] Node appears in n8n editor with correct icon, name, credentials
-- [ ] Credentials test request succeeds
-- [ ] All operations return properly structured `INodeExecutionData[][]`
+Pushing a version tag (`*.*.*`) triggers `.github/workflows/publish.yml`, which runs `npm run release` with npm OIDC trusted publishing (provenance required for n8n verification from May 2026). Don't publish locally.
