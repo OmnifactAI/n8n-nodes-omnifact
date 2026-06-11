@@ -22,6 +22,9 @@
 	"files": [
 		"dist"
 	],
+	"publishConfig": {
+		"access": "public"
+	},
 	"scripts": {
 		"build": "n8n-node build",
 		"dev": "n8n-node dev",
