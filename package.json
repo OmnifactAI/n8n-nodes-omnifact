@@ -1,13 +1,23 @@
 {
 	"name": "n8n-nodes-omnifact",
-	"version": "0.1.0",
+	"version": "1.0.0",
 	"description": "n8n community node for the Omnifact API",
 	"keywords": [
 		"n8n-community-node-package"
 	],
 	"license": "MIT",
 	"author": {
-		"name": "Omnifact GmbH"
+		"name": "Omnifact GmbH",
+		"email": "support@omnifact.ai"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/OmnifactAI/n8n-nodes-omnifact.git"
+	},
+	"homepage": "https://github.com/OmnifactAI/n8n-nodes-omnifact",
+	"bugs": {
+		"url": "https://github.com/OmnifactAI/n8n-nodes-omnifact/issues",
+		"email": "support@omnifact.ai"
 	},
 	"files": [
 		"dist"
