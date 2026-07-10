@@ -32,7 +32,7 @@ The **Chat** resource uses unauthenticated endpoint URLs and does not require cr
 
 ### Chat
 
-- **Send** — Send a message to an Omnifact chat endpoint
+- **Send** — Send a conversation (user/assistant messages) to an Omnifact chat endpoint
 
 ### Document
 

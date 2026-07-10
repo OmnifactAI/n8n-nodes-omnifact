@@ -12,14 +12,61 @@ export const sendDescription: INodeProperties[] = [
 		displayOptions: { show: { resource: ['chat'], operation: ['send'] } },
 	},
 	{
-		displayName: 'Message',
-		name: 'message',
-		type: 'string',
+		displayName: 'Messages',
+		name: 'messages',
+		type: 'fixedCollection',
+		typeOptions: {
+			multipleValues: true,
+		},
+		default: {
+			values: [
+				{
+					role: 'user',
+					content: '',
+				},
+			],
+		},
 		required: true,
-		default: '',
-		typeOptions: { rows: 4 },
-		description: 'The message to send to the chat endpoint',
+		placeholder: 'Add Message',
+		description:
+			'Messages to send to the chat endpoint. The last message must have the User role.',
 		displayOptions: { show: { resource: ['chat'], operation: ['send'] } },
+		options: [
+			{
+				displayName: 'Message',
+				name: 'values',
+				values: [
+					{
+						displayName: 'Role',
+						name: 'role',
+						type: 'options',
+						options: [
+							{
+								name: 'Assistant',
+								value: 'assistant',
+								description: 'Previous assistant response for multi-turn context',
+							},
+							{
+								name: 'User',
+								value: 'user',
+								description: 'Message from the end user',
+							},
+						],
+						default: 'user',
+						description: 'The role of the message author',
+					},
+					{
+						displayName: 'Content',
+						name: 'content',
+						type: 'string',
+						required: true,
+						default: '',
+						typeOptions: { rows: 4 },
+						description: 'The content of the message',
+					},
+				],
+			},
+		],
 	},
 	{
 		displayName: 'Output Format',

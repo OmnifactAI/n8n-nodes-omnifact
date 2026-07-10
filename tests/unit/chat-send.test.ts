@@ -18,7 +18,7 @@ describe('Chat: Send', () => {
 				resource: 'chat',
 				operation: 'send',
 				endpointId: 'ep-123',
-				message: 'Hi',
+				messages: { values: [{ role: 'user', content: 'Hi' }] },
 				outputFormat: 'json',
 				additionalFields: {},
 			},
@@ -37,7 +37,76 @@ describe('Chat: Send', () => {
 		const callArgs = (mock.helpers.httpRequest as jest.Mock).mock.calls[0][0];
 		expect(callArgs.method).toBe('POST');
 		expect(callArgs.url).toContain('/v1/endpoints/ep-123/chat');
-		expect(callArgs.body.messages[0].content).toBe('Hi');
+		expect(callArgs.body.messages).toEqual([{ role: 'user', content: 'Hi' }]);
+	});
+
+	it('should send a multi-turn conversation with user and assistant messages', async () => {
+		const mock = createMockExecuteFunctions({
+			params: {
+				resource: 'chat',
+				operation: 'send',
+				endpointId: 'ep-123',
+				messages: {
+					values: [
+						{ role: 'user', content: 'What is Omnifact?' },
+						{ role: 'assistant', content: 'Omnifact is a platform.' },
+						{ role: 'user', content: 'Tell me more' },
+					],
+				},
+				outputFormat: 'json',
+				additionalFields: {},
+			},
+		});
+
+		(mock.helpers.httpRequest as jest.Mock).mockResolvedValue(baseChatResponse);
+
+		await node.execute.call(mock);
+
+		const callArgs = (mock.helpers.httpRequest as jest.Mock).mock.calls[0][0];
+		expect(callArgs.body.messages).toEqual([
+			{ role: 'user', content: 'What is Omnifact?' },
+			{ role: 'assistant', content: 'Omnifact is a platform.' },
+			{ role: 'user', content: 'Tell me more' },
+		]);
+	});
+
+	it('should throw when no messages are provided', async () => {
+		const mock = createMockExecuteFunctions({
+			params: {
+				resource: 'chat',
+				operation: 'send',
+				endpointId: 'ep-123',
+				messages: { values: [] },
+				outputFormat: 'json',
+				additionalFields: {},
+			},
+		});
+
+		await expect(node.execute.call(mock)).rejects.toThrow('At least one message is required');
+		expect(mock.helpers.httpRequest).not.toHaveBeenCalled();
+	});
+
+	it('should throw when the last message is not from the user', async () => {
+		const mock = createMockExecuteFunctions({
+			params: {
+				resource: 'chat',
+				operation: 'send',
+				endpointId: 'ep-123',
+				messages: {
+					values: [
+						{ role: 'user', content: 'Hi' },
+						{ role: 'assistant', content: 'Hello!' },
+					],
+				},
+				outputFormat: 'json',
+				additionalFields: {},
+			},
+		});
+
+		await expect(node.execute.call(mock)).rejects.toThrow(
+			'The last message must have the User role',
+		);
+		expect(mock.helpers.httpRequest).not.toHaveBeenCalled();
 	});
 
 	it('should return markdown with inline sources when available', async () => {
@@ -59,7 +128,7 @@ describe('Chat: Send', () => {
 				resource: 'chat',
 				operation: 'send',
 				endpointId: 'ep-123',
-				message: 'Hi',
+				messages: { values: [{ role: 'user', content: 'Hi' }] },
 				outputFormat: 'markdown',
 				additionalFields: {},
 			},
@@ -87,7 +156,7 @@ describe('Chat: Send', () => {
 				resource: 'chat',
 				operation: 'send',
 				endpointId: 'ep-123',
-				message: 'Hi',
+				messages: { values: [{ role: 'user', content: 'Hi' }] },
 				outputFormat: 'markdown',
 				additionalFields: {},
 			},
@@ -107,7 +176,7 @@ describe('Chat: Send', () => {
 				resource: 'chat',
 				operation: 'send',
 				endpointId: 'ep-123',
-				message: 'Hi',
+				messages: { values: [{ role: 'user', content: 'Hi' }] },
 				outputFormat: 'json',
 				additionalFields: {
 					enableInlineSources: true,
@@ -133,7 +202,7 @@ describe('Chat: Send', () => {
 					resource: 'chat',
 					operation: 'send',
 					endpointId: 'ep-1',
-					message: 'First',
+					messages: { values: [{ role: 'user', content: 'First' }] },
 					outputFormat: 'json',
 					additionalFields: {},
 				},
@@ -141,7 +210,7 @@ describe('Chat: Send', () => {
 					resource: 'chat',
 					operation: 'send',
 					endpointId: 'ep-2',
-					message: 'Second',
+					messages: { values: [{ role: 'user', content: 'Second' }] },
 					outputFormat: 'json',
 					additionalFields: {},
 				},
@@ -174,7 +243,7 @@ describe('Chat: Send', () => {
 				resource: 'chat',
 				operation: 'send',
 				endpointId: 'ep-123',
-				message: 'Hi',
+				messages: { values: [{ role: 'user', content: 'Hi' }] },
 				outputFormat: 'json',
 				additionalFields: {},
 			},
@@ -193,7 +262,7 @@ describe('Chat: Send', () => {
 				resource: 'chat',
 				operation: 'send',
 				endpointId: 'ep-123',
-				message: 'Hi',
+				messages: { values: [{ role: 'user', content: 'Hi' }] },
 				outputFormat: 'json',
 				additionalFields: {},
 			},

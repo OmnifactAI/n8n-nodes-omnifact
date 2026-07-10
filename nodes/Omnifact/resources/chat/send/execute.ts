@@ -4,8 +4,14 @@ import type {
 	IHttpRequestOptions,
 	INodeExecutionData,
 } from 'n8n-workflow';
+import { NodeOperationError } from 'n8n-workflow';
 
 import type { OmnifactChatResponse, OmnifactDocumentPart, OmnifactInlineSource } from '../types';
+
+type ChatMessage = {
+	role?: string;
+	content?: string;
+};
 
 export function formatInlineSourcesAsMarkdown(
 	content: string,
@@ -47,9 +53,30 @@ export async function executeSend(
 	itemIndex: number,
 ): Promise<INodeExecutionData[]> {
 	const endpointId = this.getNodeParameter('endpointId', itemIndex) as string;
-	const message = this.getNodeParameter('message', itemIndex) as string;
+	const messagesCollection = this.getNodeParameter('messages', itemIndex, {
+		values: [],
+	}) as IDataObject;
 	const outputFormat = this.getNodeParameter('outputFormat', itemIndex) as string;
 	const additionalFields = this.getNodeParameter('additionalFields', itemIndex) as IDataObject;
+
+	const messages = ((messagesCollection.values ?? []) as ChatMessage[]).map(
+		({ role, content }) => ({
+			role,
+			content,
+		}),
+	);
+
+	if (messages.length === 0) {
+		throw new NodeOperationError(this.getNode(), 'At least one message is required', {
+			itemIndex,
+		});
+	}
+
+	if (messages[messages.length - 1].role !== 'user') {
+		throw new NodeOperationError(this.getNode(), 'The last message must have the User role', {
+			itemIndex,
+		});
+	}
 
 	const headers: IDataObject = {};
 
@@ -66,7 +93,7 @@ export async function executeSend(
 		url: `https://connect.omnifact.ai/v1/endpoints/${endpointId}/chat`,
 		headers,
 		body: {
-			messages: [{ content: message, role: 'user' }],
+			messages: messages as unknown as IDataObject[],
 			streaming: false,
 		},
 		json: true,
