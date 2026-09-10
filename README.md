@@ -25,7 +25,7 @@ The **Chat** resource uses unauthenticated endpoint URLs and does not require cr
 
 ## Resources
 
-### API Gateway
+### AI Gateway
 
 - **Create Chat Completion** — Create an OpenAI-compatible chat completion
 - **List Models** — List enabled OpenAI-compatible models
